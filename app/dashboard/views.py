@@ -15,6 +15,13 @@ from rados import Error as RadosError
 
 from app.base import ApiResource
 
+stats_pools = ['images',
+               'volumes',
+               'volumes-bulk',
+               'backups',
+               'default.rgw.buckets.data',
+               ]
+
 class CephClusterProperties(dict):
     """
     Validate ceph cluster connection properties
@@ -125,7 +132,8 @@ class DashboardResource(ApiResource):
             pool_utilization = CephClusterCommand(cluster, prefix='df', format='json')
             if 'err' in pool_utilization:
                 abort(500, pool_utilization['err'])
-            cluster_status['poolstats'] = pool_utilization.get('pools', [])
+            cluster_status['poolstats'] = [ p for p in pool_utilization.get('pools', [])
+                                            if p['name'] in stats_pools ]
 
             if request.mimetype == 'application/json':
                 return jsonify(cluster_status)
