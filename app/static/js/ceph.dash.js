@@ -262,7 +262,8 @@ $(function () {
             recoverObjects = data['pgmap']['recovering_objects_per_sec'];
 
             // *throughput* 
-            opsPerSec = data['pgmap']['op_per_sec'] || 0;
+            writeOpsPerSec = data['pgmap']['write_op_per_sec'] || 0;
+            readOpsPerSec = data['pgmap']['read_op_per_sec'] || 0;
             writesPerSec = fmtBytes(data['pgmap']['write_bytes_sec'] || 0);
             readsPerSec = fmtBytes(data['pgmap']['read_bytes_sec'] || 0);
 
@@ -335,23 +336,23 @@ $(function () {
 
             // update recovering status
             if (typeof(recoverBytes) != 'undefined') {
-                $("#recovering_bytes").html(panel('warning', 'Recovering bytes / second', fmtBytes(recoverBytes)));
+                $("#recovering_bytes").html(panel('warning', 'Recovering bytes per second', fmtBytes(recoverBytes)));
             } else {
                 $("#recovering_bytes").empty();
             }
             if (typeof(recoverKeys) != 'undefined') {
-                $("#recovering_keys").html(panel('warning', 'Recovering keys / second', recoverKeys));
+                $("#recovering_keys").html(panel('warning', 'Recovering keys per second', recoverKeys));
             } else {
                 $("#recovering_keys").empty();
             }
             if (typeof(recoverObjects) != 'undefined') {
-                $("#recovering_objects").html(panel('warning', 'Recovering objects / second', recoverObjects));
+                $("#recovering_objects").html(panel('warning', 'Recovering objects per second', recoverObjects));
             } else {
                  $("#recovering_objects").empty();
             }
 
             // update current throughput values
-            $("#operations_per_second").html(opsPerSec);
+            $("#operations_per_second").html(readOpsPerSec + " / " + writeOpsPerSec);
             $("#write_bytes").html(writesPerSec);
             $("#read_bytes").html(readsPerSec);
 
