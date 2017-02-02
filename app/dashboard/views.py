@@ -15,13 +15,6 @@ from rados import Error as RadosError
 
 from app.base import ApiResource
 
-stats_pools = ['images',
-               'volumes',
-               'volumes-bulk',
-               'backups',
-               'default.rgw.buckets.data',
-               ]
-
 class CephClusterProperties(dict):
     """
     Validate ceph cluster connection properties
@@ -109,6 +102,7 @@ class DashboardResource(ApiResource):
         MethodView.__init__(self)
         self.config = current_app.config['USER_CONFIG']
         self.clusterprop = CephClusterProperties(self.config)
+        self.stats_pools = self.config['stats_pools'] if 'stats_pools' in self.config else 'all'
 
     def get(self):
         with Rados(**self.clusterprop) as cluster:
@@ -133,7 +127,8 @@ class DashboardResource(ApiResource):
             if 'err' in pool_utilization:
                 abort(500, pool_utilization['err'])
             cluster_status['poolstats'] = [ p for p in pool_utilization.get('pools', [])
-                                            if p['name'] in stats_pools ]
+                                            if self.stats_pools == 'all'
+                                            or p['name'] in self.config['stats_pools'] ]
 
             if request.mimetype == 'application/json':
                 return jsonify(cluster_status)
