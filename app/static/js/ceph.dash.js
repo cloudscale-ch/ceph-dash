@@ -94,7 +94,7 @@ $(function () {
             percentPrecision: 2,
             font: { size: 14, color: '#1c1e22', family: 'Helvetica' },
             arrowLength: 10,
-            customizeText: function() { 
+            customizeText: function() {
                 return this.valueText + " - " + this.argumentText + " (" + this.percentText + ")";
             }
         },
@@ -288,11 +288,25 @@ $(function () {
 
             // *overall status*
             clusterStatusOverall = data['health']['overall_status'];
-            clusterHealthSummary = data['health']['summary'];
+            if (data['health']['status'] || false) {
+                clusterStatusOverall = data['health']['status'];
+            }
+            clusterHealthSummary = [];
+            if (data['health']['checks'] || false) {
+                $.each(data['health']['checks'], function(index, check) {
+                    clusterHealthSummary.push(check['summary']['message']);
+                });
+            }
+            else if (data['health']['summary'] || false) {
+                $.each(data['health']['summary'], function(index, check) {
+                    clusterHealthSummary.push(check['summary']);
+                });
+            }
+
 
             // *monitor state*
             monmapMons = data['monmap']['mons'];
-            timechekMons = data['health']['timechecks']['mons'];
+            quorumMons = data['quorum_names'];
 
             // *per pool utilization*
             poolStats = data['poolstats']
@@ -326,6 +340,30 @@ $(function () {
                     }
                 },
             }));
+
+            // update current throughput values
+            if ('op_per_sec' in data['pgmap']) {
+                $("#operations_per_second").html(data['pgmap']['op_per_sec'] || 0);
+                $("#ops_container").show();
+            } else {
+                if (!('write_op_per_sec' in data['pgmap'] || 'read_op_per_sec' in data['pgmap'])) {
+                    $("#operations_per_second").html(0);
+                    $("#ops_container").show();
+                } else {
+                    $("#ops_container").hide();
+                }
+            }
+
+            if ('write_op_per_sec' in data['pgmap'] || 'read_op_per_sec' in data['pgmap']) {
+                $("#write_operations_per_second").html(data['pgmap']['write_op_per_sec'] || 0);
+                $("#read_operations_per_second").html(data['pgmap']['read_op_per_sec'] || 0);
+                $("#write_ops_container").show();
+                $("#read_ops_container").show();
+            } else {
+                $("#read_ops_container").hide();
+                $("#write_ops_container").hide();
+            }
+
             $("#utilization_info").html(fmtBytes(bytesUsed) + " / " + fmtBytes(bytesTotal) + " (" + percentUsed + "%)");
 
             // update placement group chart
@@ -393,7 +431,7 @@ $(function () {
             // update overall cluster status details
             $("#overall_status").append('<ul class="list-group">');
             $.each(clusterHealthSummary, function(index, obj) {
-                $("#overall_status").append('<li class="list-group-item active"><span class="glyphicon glyphicon-flash"></span><strong>' + obj['summary'] + '</strong></li>');
+                $("#overall_status").append('<li class="list-group-item active"><span class="glyphicon glyphicon-flash"></span><strong>' + obj + '</strong></li>');
             });
             $("#overall_status").append('</ul>');
 
@@ -401,11 +439,9 @@ $(function () {
             $("#monitor_status").empty();
             $.each(monmapMons, function(index, mon) {
                 health = 'HEALTH_ERR'
-                $.each(timechekMons, function(index, mon_health) {
-                    if (mon['name'] == mon_health['name']) {
-                        health = mon_health['health'];
-                    }
-                });
+		if (quorumMons.includes(mon['name'])) {
+                        health = 'HEALTH_OK';
+                }
                 msg = 'Monitor ' + mon['name'].toUpperCase() + ': ' + health;
                 $("#monitor_status").append('<div class="col-md-4">' + message(ceph2bootstrap[health], msg) + '</div>');
             });

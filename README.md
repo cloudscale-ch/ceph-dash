@@ -3,6 +3,7 @@ ceph-dash - a free ceph dashboard / monitoring api
 
 - [ceph-dash - a free ceph dashboard / monitoring api](#user-content-ceph-dash---a-free-ceph-dashboard--monitoring-api)
 	- [Newest Feature](#user-content-newest-feature)
+		- [Docker Container](#user-content-docker-container)
 		- [InfluxDB support](#user-content-influxdb-support)
 		- [Old content warning](#user-content-old-content-warning)
 		- [Unhealthy OSD popover](#user-content-unhealthy-osd-popover)
@@ -15,9 +16,10 @@ ceph-dash - a free ceph dashboard / monitoring api
 	- [Graphite Integration](#user-content-graphite-integration)
 		- [Configuration](#user-content-configuration)
 		- [Example](#user-content-example)
+	- [FAQ](#user-content-faq)
 
 
-This is a small and clean approach of providing the [Ceph](http://ceph.com) overall cluster health status via a restful json api as well as via a (hopefully) fancy web gui. There are no dependecies to the existing ```ceph-rest-api```. This wsgi application talks to the cluster directly via librados.
+This is a small and clean approach of providing the [Ceph](http://ceph.com) overall cluster health status via a restful json api as well as via a (hopefully) fancy web gui. There are no dependencies to the existing ```ceph-rest-api```. This wsgi application talks to the cluster directly via librados.
 
 You can find a blog entry regarding monitoring a Ceph cluster with ceph-dash on [Crapworks](http://crapworks.de/blog/2015/01/05/ceph-monitoring/).
 
@@ -25,6 +27,21 @@ You can find a blog entry regarding monitoring a Ceph cluster with ceph-dash on 
 
 Newest Feature
 --------------
+
+### Docker container
+
+Since everybody recently seems to be hyped as hell about the container stuff, I've decided that I can contribute to that with a ready-to-use docker container. Available at [Docker Hub](https://hub.docker.com/r/crapworks/ceph-dash/) you can pull the ceph-dash container and configure it via the following environment variables:
+
+* Required: $CEPHMONS (comma separated list of ceph monitor ip addresses)
+* Required: $KEYRING (full keyring that you want to use to connect to your ceph cluster)
+* Optional: $NAME (name of the key you want to use)
+* Optional: $ID (id of the key you want to use)
+
+**Example**
+
+```bash
+docker run -p 5000:5000 -e CEPHMONS='10.0.2.15,10.0.2.16' -e KEYRING="$(sudo cat /etc/ceph/keyring)" crapworks/ceph-dash:latest
+```
 
 ### InfluxDB support
 
@@ -72,7 +89,7 @@ If you hit the address via a browser, you see the web frontend, that will inform
 REST Api
 --------
 
-If you access the address via commandline tools or programming languages, use ```content-type: application/json``` and you will get all the information as a json output (wich is acutally the json formatted output of ```ceph status --format=json```.
+If you access the address via commandline tools or programming languages, use ```content-type: application/json``` and you will get all the information as a json output (which is actually the json formatted output of ```ceph status --format=json```.
 
 Anyways, this is not a wrapper around the ceph binary, it uses the python bindings of librados.
 
@@ -118,3 +135,40 @@ Here you can see an example where one graph shows the bytes read/write per secon
 
 ![screenshot01](https://github.com/crapworks/ceph-dash/raw/master/screenshots/ceph-dash-graphite.png)
 
+FAQ
+---
+
+### How can I change the port number
+
+The development server of Ceph-dash runs by default on port 5000. If you can't use this port since it is already used by another application, you can change it by opening `ceph-dash.py` and change the line
+```python
+app.run(host='0.0.0.0', debug=True)
+```
+to
+```python
+app.run(host='0.0.0.0', port=6666, debug=True)
+```
+Please keep in mind that the development server should not be used in a production environment. Ceph-dash should be deployed into a proper webserver like Apache or Nginx.
+
+### Running ceph-dash behind a reverse proxy
+
+Since Version 1.2 ceph-dash is able to run behind a reverse proxy that rewrites the path where ceph-dash resides correctly. If you are using nginx, you need to use a config like this:
+
+```
+server {
+    location /foobar {
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Scheme $scheme;
+        proxy_set_header X-Script-Name /foobar;
+    }
+}
+
+```
+
+See also: https://github.com/wilbertom/flask-reverse-proxy, which is where I got the code for doing this.
+
+### Problems with NginX and uwsgi
+
+See [this issue](/../../issues/35) for a detailed explanation how to fix errors with NginX and uwsgi (Thanks to [@Lighiche](https://github.com/Lighiche))
