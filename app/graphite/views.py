@@ -7,7 +7,7 @@ import json
 from flask import jsonify
 from flask import current_app
 
-from urllib2 import urlopen
+from urllib.request import urlopen
 
 from app.base import ApiResource
 
