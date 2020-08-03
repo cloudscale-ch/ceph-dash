@@ -115,6 +115,12 @@ class DashboardResource(ApiResource):
             if 'err' in cluster_status:
                 abort(500, cluster_status['err'])
 
+            quorum_status = CephClusterCommand(cluster, prefix='quorum_status', format='json')
+            if 'err' in quorum_status:
+                abort(500, quorum_status['err'])
+
+            cluster_status['monmap'] = quorum_status['monmap']
+
             # check for unhealthy osds and get additional osd infos from cluster
             total_osds = cluster_status['osdmap']['num_osds']
             in_osds = cluster_status['osdmap']['num_up_osds']
