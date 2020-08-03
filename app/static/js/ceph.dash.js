@@ -268,13 +268,13 @@ $(function () {
             readsPerSec = fmtBytes(data['pgmap']['read_bytes_sec'] || 0);
 
             // *osd state*
-            numOSDtotal = data['osdmap']['osdmap']['num_osds'] || 0;
-            numOSDin = data['osdmap']['osdmap']['num_in_osds'] || 0;
-            numOSDup = data['osdmap']['osdmap']['num_up_osds'] || 0;
-            numOSDunhealthy = data['osdmap']['osdmap']['num_osds'] - data['osdmap']['osdmap']['num_up_osds'] || 0;
+            numOSDtotal = data['osdmap']['num_osds'] || 0;
+            numOSDin = data['osdmap']['num_in_osds'] || 0;
+            numOSDup = data['osdmap']['num_up_osds'] || 0;
+            numOSDunhealthy = data['osdmap']['num_osds'] - data['osdmap']['num_up_osds'] || 0;
             unhealthyOSDDetails = data['osdmap']['details'];
-            osdFull = data['osdmap']['osdmap']['full'];
-            osdNearFull = data['osdmap']['osdmap']['nearfull'];
+            osdFull = data['osdmap']['full'];
+            osdNearFull = data['osdmap']['nearfull'];
 
             var $parent = $("#unhealthy_osds").parent('.panel');
 
