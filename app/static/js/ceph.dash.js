@@ -319,7 +319,7 @@ $(function () {
             var poolValues = [];
             var poolTooltips = [];
             $.each(poolStats, function(index, pool) {
-                used = pool.stats.bytes_used;
+                used = pool.stats.stored;
                 total = pool.stats.max_avail + used;
                 percUsage = (used / total) * 100;
                 poolValues.push(percUsage.toFixed(2));
